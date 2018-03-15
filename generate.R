@@ -8,11 +8,6 @@ generate_dots <- function(file_path, per_dot = 100) {
   tracts <- st_read(file_path) %>%
     select(c(geometry, GEOID, EmOff15, EmIns15, EmInd15, EmSer15, EmOth15)) %>%
     mutate(
-      EmOff15 = EmOff15,
-      EmIns15 = EmIns15,
-      EmInd15 = EmInd15,
-      EmSer15 = EmSer15,
-      EmOth15 = EmOth15,
       total = as.integer((EmOff15 + EmIns15 + EmInd15 + EmSer15 + EmOth15) / per_dot)
     )
   
