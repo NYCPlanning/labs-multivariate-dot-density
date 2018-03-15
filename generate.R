@@ -2,11 +2,14 @@ library('tidyverse')
 library('sf')
 library('lwgeom')
 
-generate_dots <- function(file_path, per_dot = 100) {
+generate_dots <- function(file_path, columns = c(), per_dot = 100) {
   # read in the data, select only what's needed, and divide variables
   # by the per_dot factor. Include a total of the new per_dot.
+  
+  # TODO make mutate dynamic from col names
+  all_columns <- columns %>% append('geometry')
   tracts <- st_read(file_path) %>%
-    select(c(geometry, GEOID, EmOff15, EmIns15, EmInd15, EmSer15, EmOth15)) %>%
+    select(all_columns) %>%
     mutate(
       total = as.integer((EmOff15 + EmIns15 + EmInd15 + EmSer15 + EmOth15) / per_dot)
     )
@@ -39,13 +42,7 @@ generate_dots <- function(file_path, per_dot = 100) {
     mutate(
       category = sample(category, 1)
     ) %>%
-    ungroup
-  
-  # set as factor for checking grouping stats
-  dots <- dots %>%
-    mutate(
-      category = factor(category)
-    ) %>%
+    ungroup %>%
     arrange(GEOID, category)
   
   return(dots)
