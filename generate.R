@@ -14,7 +14,8 @@ generate_dots <- function(file_path, columns = c(), per_dot = 100) {
     mutate(
       total = rowSums(.[, columns]) / per_dot
     ) %>%
-    st_sf
+    st_sf %>% 
+    head
   
   # randomly distribute dots from the tracts and join back in
   # Notice:
@@ -24,8 +25,13 @@ generate_dots <- function(file_path, columns = c(), per_dot = 100) {
     st_sample(tracts$total) %>% 
     st_sf %>% 
     st_join(tracts)
-  
-  temp <- c()
+
+  flatten1 <- function(x) {
+    y <- list()
+    rapply(x, function(x) y <<- c(y,x))
+    y
+  }
+
   # create a new column called category and generate a list of elements
   # for each variable. Then, randomly sample from that list. 
   # Distribution or weighting is reflected in the number of elements
@@ -34,12 +40,14 @@ generate_dots <- function(file_path, columns = c(), per_dot = 100) {
     mutate(
       category = 
         list(
-          lapply(
-            columns, 
-            function(current, row) {
-              return(rep(current, row[[current]]))
-            },
-            .data
+          flatten1(
+            lapply(
+              columns, 
+              function(current, row) {
+                return(rep(current, row[[current]]))
+              },
+              .data
+            )
           )
         )
     ) %>%
@@ -47,7 +55,7 @@ generate_dots <- function(file_path, columns = c(), per_dot = 100) {
       category = sample(category, 1)
     ) %>%
     ungroup
-  
+
   return(dots)
 }
 
