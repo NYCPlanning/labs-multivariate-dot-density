@@ -9,10 +9,12 @@ generate_dots <- function(file_path, columns = c(), per_dot = 100) {
   # TODO make mutate dynamic from col names
   all_columns <- columns %>% append('geometry')
   tracts <- st_read(file_path) %>%
+    as.data.frame %>%
     select(all_columns) %>%
     mutate(
-      total = as.integer((EmOff15 + EmIns15 + EmInd15 + EmSer15 + EmOth15) / per_dot)
-    )
+      total = rowSums(.[, columns]) / per_dot
+    ) %>%
+    st_sf
   
   # randomly distribute dots from the tracts and join back in
   # Notice:
@@ -23,29 +25,34 @@ generate_dots <- function(file_path, columns = c(), per_dot = 100) {
     st_sf %>% 
     st_join(tracts)
   
+  temp <- c()
   # create a new column called category and generate a list of elements
   # for each variable. Then, randomly sample from that list. 
   # Distribution or weighting is reflected in the number of elements
   dots <- dots %>%
     rowwise %>%
     mutate(
-      category = list(
-        c(
-          rep('EmOff15', EmOff15), 
-          rep('EmIns15', EmIns15),
-          rep('EmInd15', EmInd15),
-          rep('EmSer15', EmSer15),
-          rep('EmOth15', EmOth15)
+      category = 
+        list(
+          lapply(
+            columns, 
+            function(current, row) {
+              return(rep(current, row[[current]]))
+            },
+            .data
+          )
         )
-      )
     ) %>%
     mutate(
       category = sample(category, 1)
     ) %>%
-    ungroup %>%
-    arrange(GEOID, category)
+    ungroup
   
   return(dots)
 }
 
-generate_dots("data/tracts/region_censustract_v0/region_censustract_v0.shp", 100)
+final <- generate_dots(
+  "data/tracts/region_censustract_v0/region_censustract_v0.shp",
+  c('EmOff15', 'EmIns15', 'EmInd15', 'EmSer15', 'EmOth15'),
+  100
+)
