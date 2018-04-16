@@ -79,6 +79,8 @@ generate_dots <- function(file_path, columns = c(), per_dot = 100) {
 
 final <- generate_dots(
   "data/municipalities/region_municipality_v0/region_municipality_v0.shp",
-  c('PopA1016'),
+  c('PopA1016', 'PopFB16'),
   50
 )
+
+st_write(final, 'final.shp')
